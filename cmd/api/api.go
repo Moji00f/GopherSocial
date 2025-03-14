@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Moji00f/GopherSocial/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"log"
@@ -10,6 +11,7 @@ import (
 
 type application struct {
 	config config
+	store  store.Storage
 }
 
 type config struct {

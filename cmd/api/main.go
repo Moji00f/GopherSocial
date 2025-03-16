@@ -8,6 +8,8 @@ import (
 	"log"
 )
 
+var version = "0.0.1"
+
 func main() {
 
 	cfg := config{
@@ -18,6 +20,8 @@ func main() {
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
 			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
+		env:     env.GetString("ENV", "development"),
+		version: version,
 	}
 
 	db, err := db.New(cfg.db.addr, cfg.db.maxOpenConns, cfg.db.maxIdleConns, cfg.db.maxIdleTime)

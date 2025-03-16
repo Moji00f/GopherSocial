@@ -14,7 +14,7 @@ type Storage struct {
 	Posts interface {
 		Create(context.Context, *Post) error
 		GetById(context.Context, int64) (*Post, error)
-		//Delete(context.Context, int64) error
+		Delete(context.Context, int64) error
 	}
 
 	Comments interface {

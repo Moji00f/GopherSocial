@@ -1,0 +1,5 @@
+ migrate create -seq -ext sql -dir ./cmd/migrate/migrations create_users
+
+ migrate -path=./cmd/migrate/migrations -database="postgres://admin:adminpassword@localhost/gophersocial?sslmode=disable" up
+
+ migrate -path=./cmd/migrate/migrations -database="postgres://admin:adminpassword@localhost/gophersocial?sslmode=disable" down

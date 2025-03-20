@@ -29,12 +29,12 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 
 	var payload CreatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
-		app.badRequestResponse(w, r, err)
+		app.badRequestRequest(w, r, err)
 		return
 	}
 
 	if err := Validate.Struct(payload); err != nil {
-		app.badRequestResponse(w, r, err)
+		app.badRequestRequest(w, r, err)
 		return
 	}
 
@@ -106,12 +106,12 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 
 	var payload UpdatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
-		app.badRequestResponse(w, r, err)
+		app.badRequestRequest(w, r, err)
 		return
 	}
 
 	if err := Validate.Struct(payload); err != nil {
-		app.badRequestResponse(w, r, err)
+		app.badRequestRequest(w, r, err)
 		return
 	}
 

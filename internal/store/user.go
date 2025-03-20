@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 )
 
 type User struct {
@@ -45,8 +46,8 @@ func (u *UserStore) GetById(ctx context.Context, postId int64) (*User, error) {
 		&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt,
 	)
 	if err != nil {
-		switch err {
-		case sql.ErrNoRows:
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
 			return nil, ErrNotFound
 		default:
 			return nil, err

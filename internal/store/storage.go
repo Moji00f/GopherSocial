@@ -27,6 +27,7 @@ type Storage struct {
 
 	User interface {
 		Create(context.Context, *User) error
+		GetById(context.Context, int64) (*User, error)
 	}
 }
 

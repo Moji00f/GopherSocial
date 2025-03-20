@@ -10,6 +10,14 @@ migration:
 migrate-up:
 	@migrate -path=$(MIGRATION_PATH) -database=$(DB_MIGRATOR_ADDR) up
 
+.PHONY: migrate-status
+migrate-status:
+	@migrate -path=$(MIGRATION_PATH) -database=$(DB_MIGRATOR_ADDR) version
+
+.PHONY: clear-dirty
+clear-dirty:
+	@migrate -path=$(MIGRATION_PATH) -database=$(DB_MIGRATOR_ADDR) force 7
+
 .PHONY: migrate-down
 migrate-down:
 	@migrate -path=$(MIGRATION_PATH) -database=$(DB_MIGRATOR_ADDR) down $(filter-out $@,$(MAKECMDGOALS))

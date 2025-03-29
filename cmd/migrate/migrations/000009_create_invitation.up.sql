@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS user_invitaions(
+    token BYTEA PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    expiry TIMESTAMP(0) WITH TIME ZONE NOT NULL
+)

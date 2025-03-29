@@ -5,6 +5,7 @@ import (
 	"github.com/Moji00f/GopherSocial/internal/env"
 	"github.com/Moji00f/GopherSocial/internal/store"
 	"go.uber.org/zap"
+	"time"
 )
 
 var version = "0.0.1"
@@ -39,6 +40,9 @@ func main() {
 		},
 		env:     env.GetString("ENV", "development"),
 		version: version,
+		mail: mailConfig{
+			exp: time.Hour * 24 * 3,
+		},
 	}
 
 	//Logger

@@ -3,3 +3,11 @@
  migrate -path=./cmd/migrate/migrations -database="postgres://admin:adminpassword@localhost/gophersocial?sslmode=disable" up
 
  migrate -path=./cmd/migrate/migrations -database="postgres://admin:adminpassword@localhost/gophersocial?sslmode=disable" down
+
+
+DROP TABLE IF EXISTS schema_migrations;
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    version bigint NOT NULL PRIMARY KEY,
+    dirty boolean NOT NULL
+);
+

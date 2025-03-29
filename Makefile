@@ -14,6 +14,7 @@ migrate-up:
 migrate-status:
 	@migrate -path=$(MIGRATION_PATH) -database=$(DB_MIGRATOR_ADDR) version
 
+# force x
 .PHONY: clear-dirty
 clear-dirty:
 	@migrate -path=$(MIGRATION_PATH) -database=$(DB_MIGRATOR_ADDR) force 7

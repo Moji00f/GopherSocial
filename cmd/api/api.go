@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Moji00f/GopherSocial/docs"
+	"github.com/Moji00f/GopherSocial/internal/mailer"
 	"github.com/Moji00f/GopherSocial/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -16,19 +17,37 @@ type application struct {
 	config config
 	store  store.Storage
 	logger *zap.SugaredLogger
+	mailer mailer.Client
 }
 
 type config struct {
-	addr    string
-	db      dbConfig
-	env     string
-	version string
-	apiURL  string
-	mail    mailConfig
+	addr        string
+	db          dbConfig
+	env         string
+	version     string
+	apiURL      string
+	mail        mailConfig
+	frontendUrl string
 }
 
 type mailConfig struct {
-	exp time.Duration
+	exp       time.Duration
+	fromEmail string
+	mailTrap  mailTrapConfig
+	sendGrid  sendGridConfig
+	gmail     gmailConfig
+}
+
+type mailTrapConfig struct {
+	apiKey string
+}
+
+type sendGridConfig struct {
+	apiKey string
+}
+
+type gmailConfig struct {
+	password string
 }
 
 type dbConfig struct {

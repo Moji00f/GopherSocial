@@ -208,3 +208,28 @@ func (u *UserStore) deleteUserInvitations(ctx context.Context, tx *sql.Tx, userI
 
 	return nil
 }
+
+func (u *UserStore) Delete(ctx context.Context, userId int64) error {
+	return withTx(u.db, ctx, func(tx *sql.Tx) error {
+		if err := u.delete(ctx, tx, userId); err != nil {
+			return err
+		}
+		if err := u.deleteUserInvitations(ctx, tx, userId); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+func (u *UserStore) delete(ctx context.Context, tx *sql.Tx, id int64) error {
+	query := `DELETE FROM users WHERE id=$1`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := tx.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

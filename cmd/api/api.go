@@ -43,6 +43,9 @@ type basicConfig struct {
 }
 
 type tokenConfig struct {
+	secret string
+	exp    time.Duration
+	iss    string
 }
 
 type mailConfig struct {

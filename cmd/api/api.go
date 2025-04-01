@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Moji00f/GopherSocial/docs"
+	"github.com/Moji00f/GopherSocial/internal/auth"
 	"github.com/Moji00f/GopherSocial/internal/mailer"
 	"github.com/Moji00f/GopherSocial/internal/store"
 	"github.com/go-chi/chi/v5"
@@ -15,10 +16,11 @@ import (
 )
 
 type application struct {
-	config config
-	store  store.Storage
-	logger *zap.SugaredLogger
-	mailer mailer.Client
+	config        config
+	store         store.Storage
+	logger        *zap.SugaredLogger
+	mailer        mailer.Client
+	authenticator auth.Authenticator
 }
 
 type config struct {
@@ -105,6 +107,7 @@ func (app *application) mount() http.Handler {
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
 		r.Route("/posts", func(r chi.Router) {
+			r.Use(app.AuthTokenMiddleware)
 			r.Post("/", app.createPostHandler)
 			r.Route("/{postId}", func(r chi.Router) {
 				r.Use(app.postContextMiddleware)
@@ -119,7 +122,8 @@ func (app *application) mount() http.Handler {
 			r.Put("/active/{token}", app.activeUserHandler)
 
 			r.Route("/{userId}", func(r chi.Router) {
-				r.Use(app.userContextMiddleware)
+				r.Use(app.AuthTokenMiddleware)
+				//r.Use(app.userContextMiddleware)
 				r.Get("/", app.getUserHandler)
 
 				r.Put("/follow", app.followUserHandler)
@@ -127,6 +131,7 @@ func (app *application) mount() http.Handler {
 			})
 
 			r.Group(func(r chi.Router) {
+				r.Use(app.AuthTokenMiddleware)
 				r.Get("/feed", app.getUserFeedHandler)
 			})
 
@@ -135,6 +140,7 @@ func (app *application) mount() http.Handler {
 		//publick
 		r.Route("/authentication", func(r chi.Router) {
 			r.Post("/user", app.registerUserHandler)
+			r.Post("/token", app.createTokenHandler)
 
 		})
 

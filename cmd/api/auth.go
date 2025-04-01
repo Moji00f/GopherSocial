@@ -2,12 +2,15 @@ package main
 
 import (
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"github.com/Moji00f/GopherSocial/internal/mailer"
 	"github.com/Moji00f/GopherSocial/internal/store"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"net/http"
+	"time"
 )
 
 type RegisterUserPayload struct {
@@ -19,6 +22,11 @@ type RegisterUserPayload struct {
 type UserWithToken struct {
 	*store.User
 	Token string `json:"token"`
+}
+
+type createUserTokenPayload struct {
+	Email    string `json:"email" validate:"required,email,max=255"`
+	Password string `json:"password" validate:"required,min=3,max=72"`
 }
 
 // registerUserHandler godoc
@@ -111,4 +119,52 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		app.internalServerError(w, r, err)
 	}
 
+}
+
+func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Request) {
+	var payload createUserTokenPayload
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestRequest(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestRequest(w, r, err)
+		return
+	}
+
+	user, err := app.store.User.GetByEmail(r.Context(), payload.Email)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			app.unauthorizedErrorResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := user.Password.Compare(payload.Password); err != nil {
+		app.unauthorizedErrorResponse(w, r, err)
+		return
+	}
+
+	claims := jwt.MapClaims{
+		"sub": user.ID,
+		"exp": time.Now().Add(app.config.auth.token.exp).Unix(),
+		"iat": time.Now().Unix(),
+		"nbf": time.Now().Unix(),
+		"iss": app.config.auth.token.iss,
+		"aud": app.config.auth.token.iss,
+	}
+
+	token, err := app.authenticator.GenerateToken(claims)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusCreated, &token); err != nil {
+		app.internalServerError(w, r, err)
+	}
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Moji00f/GopherSocial/internal/auth"
 	"github.com/Moji00f/GopherSocial/internal/db"
 	"github.com/Moji00f/GopherSocial/internal/env"
 	"github.com/Moji00f/GopherSocial/internal/mailer"
@@ -58,6 +59,11 @@ func main() {
 				user: env.GetString("AUTH_BASIC_USER", "admin"),
 				pass: env.GetString("AUTH_BASIC_PASS", "admin"),
 			},
+			token: tokenConfig{
+				secret: env.GetString("AUTH_TOKEN_SECRET", "example"),
+				exp:    time.Hour * 24 * 3,
+				iss:    env.GetString("AUTH_TOKEN_ISSUER", "GoDevOps"),
+			},
 		},
 	}
 
@@ -81,11 +87,14 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	jwtAuthenticator := auth.NewJWTAuthenticator(cfg.auth.token.secret, cfg.auth.token.iss, cfg.auth.token.iss)
+
 	app := &application{
-		config: cfg,
-		store:  store,
-		logger: logger,
-		mailer: &gmail,
+		config:        cfg,
+		store:         store,
+		logger:        logger,
+		mailer:        &gmail,
+		authenticator: jwtAuthenticator,
 	}
 
 	mux := app.mount()

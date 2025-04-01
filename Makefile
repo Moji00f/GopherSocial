@@ -14,11 +14,13 @@ migrate-up:
 migrate-status:
 	@migrate -path=$(MIGRATION_PATH) -database=$(DB_MIGRATOR_ADDR) version
 
+#جای x آخرین نسخه سالم مایگریشن را قرار بده
 # force x
 .PHONY: clear-dirty
 clear-dirty:
-	@migrate -path=$(MIGRATION_PATH) -database=$(DB_MIGRATOR_ADDR) force 7
+	@migrate -path=$(MIGRATION_PATH) -database=$(DB_MIGRATOR_ADDR) force 11
 
+#make migrate-down 3 (3 is step of number of rollback)
 .PHONY: migrate-down
 migrate-down:
 	@migrate -path=$(MIGRATION_PATH) -database=$(DB_MIGRATOR_ADDR) down $(filter-out $@,$(MAKECMDGOALS))

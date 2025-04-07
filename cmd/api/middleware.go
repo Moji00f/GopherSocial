@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/Moji00f/GopherSocial/internal/store"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"strconv"
@@ -80,7 +81,8 @@ func (app *application) AuthTokenMiddleware(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 
-		user, err := app.store.User.GetById(ctx, userId)
+		//user, err := app.store.User.GetById(ctx, userId)
+		user, err := app.getUser(ctx, userId)
 		if err != nil {
 			app.unauthorizedErrorResponse(w, r, err)
 			return
@@ -90,4 +92,50 @@ func (app *application) AuthTokenMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func (app *application) checkPostOwnership(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := getUserFromContext(r)
+		post := app.getPostFromCtx(r)
+
+		if post.UserID == user.ID {
+			next.ServeHTTP(w, r)
+			return
+		}
+	})
+}
+
+func (app *application) checkRolePrecedence(ctx context.Context, user *store.User, roleName string) (bool, error) {
+	role, err := app.store.Roles.GetByName(ctx, roleName)
+	if err != nil {
+		return false, err
+	}
+
+	return user.Role.Level >= role.Level, nil
+}
+
+func (app *application) getUser(ctx context.Context, userId int64) (*store.User, error) {
+	if !(app.config.redisCfg.enable) {
+		return app.store.User.GetById(ctx, userId)
+	}
+
+	user, err := app.cacheStorage.Users.Get(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		user, err := app.store.User.GetById(ctx, userId)
+		if err != nil {
+			return nil, err
+		}
+
+		err = app.cacheStorage.Users.Set(ctx, user)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return user, nil
 }

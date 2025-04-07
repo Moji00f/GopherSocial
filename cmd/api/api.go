@@ -6,6 +6,7 @@ import (
 	"github.com/Moji00f/GopherSocial/internal/auth"
 	"github.com/Moji00f/GopherSocial/internal/mailer"
 	"github.com/Moji00f/GopherSocial/internal/store"
+	"github.com/Moji00f/GopherSocial/internal/store/cache"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -18,6 +19,7 @@ import (
 type application struct {
 	config        config
 	store         store.Storage
+	cacheStorage  cache.Storage
 	logger        *zap.SugaredLogger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
@@ -32,6 +34,7 @@ type config struct {
 	mail        mailConfig
 	frontendUrl string
 	auth        authConfig
+	redisCfg    redisConfig
 }
 
 type authConfig struct {
@@ -77,6 +80,13 @@ type dbConfig struct {
 	maxIdleTime  string
 }
 
+type redisConfig struct {
+	addr     string
+	password string
+	db       int
+	enable   bool
+}
+
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 
@@ -112,8 +122,9 @@ func (app *application) mount() http.Handler {
 			r.Route("/{postId}", func(r chi.Router) {
 				r.Use(app.postContextMiddleware)
 				r.Get("/", app.getPostHandler)
-				r.Patch("/", app.updatePostHandler)
-				r.Delete("/", app.deletePostHandler)
+
+				r.Patch("/", app.checkPostOwnership("moderator", app.updatePostHandler))
+				r.Delete("/", app.checkPostOwnership("admin", app.deletePostHandler))
 
 			})
 		})

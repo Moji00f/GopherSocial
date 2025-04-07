@@ -18,6 +18,8 @@ type User struct {
 	Password  password `json:"-"`
 	CreatedAt string   `json:"created_at"`
 	IsActive  bool     `json:"is_active"`
+	RoleId    int64    `json:"role_id"`
+	Role      Role     `json:"role"`
 }
 
 type UserStore struct {
@@ -47,10 +49,16 @@ func (p *password) Compare(text string) error {
 
 func (u *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 	query := `
-		INSERT INTO users (username, password, email) VALUES ($1,$2,$3) RETURNING id, created_at
+		INSERT INTO users (username, password, email, role_id) VALUES
+		($1,$2,$3,(SELECT id FROM roles WHERE name=$4))
+		RETURNING id, created_at
 	`
 
-	err := tx.QueryRowContext(ctx, query, user.Username, user.Password.hash, user.Email).Scan(&user.ID, &user.CreatedAt)
+	role := user.Role.Name
+	if role == "" {
+		role = "user"
+	}
+	err := tx.QueryRowContext(ctx, query, user.Username, user.Password.hash, user.Email, role).Scan(&user.ID, &user.CreatedAt)
 
 	var pgErr *pq.Error
 	if errors.As(err, &pgErr) {
@@ -67,22 +75,37 @@ func (u *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 	return err
 }
 
-func (u *UserStore) GetById(ctx context.Context, postId int64) (*User, error) {
+func (u *UserStore) GetById(ctx context.Context, userId int64) (*User, error) {
 	query := `
-			SELECT id, username, email, password,is_active, created_at FROM users WHERE id=$1
-    `
+		SELECT users.id, username, email, password, created_at, roles.*
+		FROM users
+		JOIN roles ON (users.role_id = roles.id)
+		WHERE users.id = $1 AND is_active = true
+	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
 
 	user := &User{}
-
-	err := u.db.QueryRowContext(ctx, query, postId).Scan(
-		&user.ID, &user.Username, &user.Email, &user.Password.hash, &user.IsActive, &user.CreatedAt,
+	err := u.db.QueryRowContext(
+		ctx,
+		query,
+		userId,
+	).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Password.hash,
+		&user.CreatedAt,
+		&user.Role.ID,
+		&user.Role.Name,
+		&user.Role.Description,
+		&user.Role.Level,
 	)
+
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		switch err {
+		case sql.ErrNoRows:
 			return nil, ErrNotFound
 		default:
 			return nil, err

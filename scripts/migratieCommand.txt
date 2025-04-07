@@ -11,3 +11,5 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     dirty boolean NOT NULL
 );
 
+
+npx autocannon http://localhost:8080/v1/users/170 --conections --duration 5 -H "Autorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJHb0Rldk9wcyIsImV4cCI6MTc0NDI5MTg4MCwiaWF0IjoxNzQ0MDMyNjgwLCJpc3MiOiJHb0Rldk9wcyIsIm5iZiI6MTc0NDAzMjY4MCwic3ViIjoxNzB9.UxFBhHWJKhc8UvpMfsmHfRz2CFCNUkJqCsMLUs_IadQ"
